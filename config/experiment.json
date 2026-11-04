@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "project_id": "sha256-length-extension",
+  "hash": {
+    "name": "sha256",
+    "block_size_bytes": 64,
+    "digest_size_bytes": 32,
+    "tag_truncation": false
+  },
+  "schemes": ["prefix_sha256", "hmac_sha256"],
+  "grid": {
+    "key_lengths_bytes": [8, 16, 32, 48],
+    "original_total_lengths_bytes": [55, 56, 63, 64, 119, 120, 127, 128],
+    "message_length_rule": "original_total_length_bytes - key_length_bytes",
+    "append_payloads": [
+      {
+        "id": "role_admin",
+        "encoding": "hex",
+        "data": "3b726f6c653d61646d696e",
+        "length_bytes": 11
+      },
+      {
+        "id": "bytes_00_to_4f",
+        "encoding": "hex",
+        "data": "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494a4b4c4d4e4f",
+        "length_bytes": 80
+      }
+    ],
+    "guessed_key_length_bytes": {
+      "start_inclusive": 1,
+      "end_inclusive": 64,
+      "order": "ascending"
+    },
+    "scan_policy": "exhaustive_without_early_stop",
+    "continuation_cache": false
+  },
+  "profiles": {
+    "pilot": {
+      "repetitions_per_combination": 1,
+      "expected_counts": {
+        "base_cases": 64,
+        "case_scheme_pairs": 128,
+        "candidate_attempts": 8192,
+        "sanity_checks": 640,
+        "attacker_continuation_calls": 8192,
+        "attacker_compression_blocks": 12288
+      }
+    },
+    "main": {
+      "repetitions_per_combination": 10,
+      "expected_counts": {
+        "base_cases": 640,
+        "case_scheme_pairs": 1280,
+        "candidate_attempts": 81920,
+        "sanity_checks": 6400,
+        "attacker_continuation_calls": 81920,
+        "attacker_compression_blocks": 122880
+      }
+    }
+  },
+  "sanity_checks": [
+    {"id": "original", "expected_accept": true},
+    {"id": "message_bit_flip", "expected_accept": false},
+    {"id": "tag_bit_flip", "expected_accept": false},
+    {"id": "append_keep_tag", "expected_accept": false},
+    {"id": "short_tag", "expected_accept": false}
+  ],
+  "fixtures": {
+    "key_generator": "secrets.token_bytes",
+    "message_generator": "secrets.token_bytes",
+    "sampling": "independent_key_and_message_per_base_case",
+    "scheme_pairing": "same_key_message_and_append_data",
+    "rerun_policy": "reuse_saved_fixtures",
+    "bytes_encoding_on_disk": "hex",
+    "private_path_template": "data/{run_id}/fixtures.json",
+    "public_path_template": "data/{run_id}/public_cases.json",
+    "public_case_fields": ["case_id", "message_hex", "append_id", "append_hex", "tags_by_scheme"]
+  },
+  "storage": {
+    "run_directory_template": "results/{run_id}",
+    "existing_run_policy": "fail_if_exists",
+    "files": {
+      "metadata": "run_metadata.json",
+      "attempts": "attempts.csv",
+      "sanity_checks": "sanity_checks.csv",
+      "extra_attempts": "extra_attempts.csv",
+      "summary": "summary.csv"
+    },
+    "attempt_unique_key": ["run_id", "case_id", "scheme", "guessed_key_len_bytes"],
+    "counts_exclude_csv_header": true
+  },
+  "extra_experiment": {
+    "id": "E5",
+    "enabled": false,
+    "key_length_bytes": 80,
+    "message_length_bytes": 32,
+    "append_payload_id": "role_admin",
+    "scheme_policy": "both_configured_schemes",
+    "guess_policy": "reuse_main_guess_range",
+    "expected_candidate_attempts_if_enabled": 128,
+    "include_in_main_counts": false
+  }
+}
